@@ -71,7 +71,8 @@ class Encuesta
         'Hulu',
         'Star+',
         'Crunchyroll',
-        'YouTube Premium'
+        'YouTube Premium',
+        'Otros'
     ];
 
     public function __construct($id, $nombre, $pais, $genero, $frecuencia, $plataformas = [])
@@ -163,6 +164,11 @@ class Encuesta
     {
         if (!is_array($plataformas)) {
             $plataformas = [];
+        }
+
+        // Si no se seleccionó ninguna plataforma, asignar "Otros"
+        if (empty($plataformas)) {
+            $plataformas = ['Otros'];
         }
 
         foreach ($plataformas as $plataforma) {

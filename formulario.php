@@ -63,6 +63,9 @@ $generosValidos = Encuesta::getGenerosValidos();
 $frecuenciasValidas = Encuesta::getFrecuenciasValidas();
 $plataformasValidas = Encuesta::getPlataformasValidas();
 
+// Obtener el siguiente ID disponible si no hay datos previos
+$siguienteId = !isset($datos['id']) ? $manager->obtenerSiguienteId() : $datos['id'];
+
 // Incluir header
 include 'views/header.php';
 ?>
@@ -124,15 +127,29 @@ include 'views/header.php';
                                 <i class="fas fa-hashtag me-1"></i>
                                 ID de Participante *
                             </label>
-                            <input type="number" 
-                                   class="form-control form-control-custom" 
-                                   id="id" 
-                                   name="id" 
-                                   value="<?php echo htmlspecialchars($datos['id'] ?? ''); ?>"
-                                   required
-                                   min="1"
-                                   placeholder="Ej: 123">
-                            <div class="form-text">Número único e irrepetible para identificar al participante</div>
+                            <div class="input-group">
+                                <input type="number" 
+                                       class="form-control form-control-custom" 
+                                       id="id" 
+                                       name="id" 
+                                       value="<?php echo htmlspecialchars($siguienteId ?? ''); ?>"
+                                       required
+                                       min="1"
+                                       placeholder="Ej: <?php echo $siguienteId; ?>">
+                                <button type="button" 
+                                        class="btn btn-outline-secondary" 
+                                        id="btnSiguienteId"
+                                        title="Generar siguiente ID">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Número único e irrepetible. 
+                                <span class="text-success">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Sugerido: <?php echo $siguienteId; ?>
+                                </span>
+                            </div>
                         </div>
                         
                         <div class="col-md-6">
@@ -213,7 +230,13 @@ include 'views/header.php';
                                 <i class="fas fa-tv me-1"></i>
                                 Plataformas de Streaming Utilizadas
                             </label>
-                            <div class="form-text mb-3">Seleccione todas las plataformas que utiliza (opcional)</div>
+                            <div class="form-text mb-3">
+                                Seleccione todas las plataformas que utiliza. 
+                                <span class="text-info">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Si no utiliza ninguna de las listadas o no marca ninguna, se registrará automáticamente como "Otros"
+                                </span>
+                            </div>
                             
                             <div class="row">
                                 <?php 
@@ -314,6 +337,30 @@ include 'views/header.php';
 document.addEventListener('DOMContentLoaded', function() {
     const idInput = document.getElementById('id');
     const nombreInput = document.getElementById('nombre');
+    const btnSiguienteId = document.getElementById('btnSiguienteId');
+    
+    // Botón para generar siguiente ID
+    btnSiguienteId.addEventListener('click', function() {
+        // Hacer una petición AJAX para obtener el siguiente ID
+        fetch('obtener_siguiente_id.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    idInput.value = data.siguiente_id;
+                    idInput.classList.remove('is-invalid');
+                    idInput.classList.add('is-valid');
+                    
+                    // Mostrar notificación
+                    showNotification('ID actualizado: ' + data.siguiente_id, 'success');
+                } else {
+                    showNotification('Error al obtener siguiente ID', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+            });
+    });
     
     // Validar ID
     idInput.addEventListener('input', function() {
@@ -344,6 +391,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-eliminar después de 3 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
 </script>
 
 <?php include 'views/footer.php'; ?>

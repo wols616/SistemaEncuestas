@@ -337,4 +337,20 @@ class EncuestaManager
             'historial_fallos' => isset($_SESSION['historial_fallos']) ? $_SESSION['historial_fallos'] : []
         ];
     }
+
+    /**
+     * Obtiene el siguiente ID disponible (último ID + 1)
+     * @return int
+     */
+    public function obtenerSiguienteId()
+    {
+        if (empty($_SESSION['encuestas'])) {
+            return 1;
+        }
+
+        $ids = array_column($_SESSION['encuestas'], 'id');
+        $maxId = max($ids);
+
+        return $maxId + 1;
+    }
 }
